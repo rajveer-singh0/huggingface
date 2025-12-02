@@ -31,31 +31,80 @@ def allowed_file(filename: str) -> bool:
         and filename.rsplit(".", 1)[1].lower() in app.config["ALLOWED_EXTENSIONS"]
     )
 
-
 def predict_image(img_path: str) -> dict:
     """
-    Send image to Hugging Face Space via gradio_client and return
-    {label, confidence, processed_image} or {error,...} on failure.
+    Call the Hugging Face Space and return a simple dict:
+    {label, confidence, processed_image}.
+    Assumes the Space returns a standard classification output:
+      - list of {"label": ..., "score": ...}
+      - or a single {"label": ..., "score": ...}
+      - or just a label string.
     """
     try:
-        result = client.predict(
+        hf_result = client.predict(
             img=handle_file(img_path),
             api_name=API_NAME,
         )
 
-        # Expect: result[0] = scores dict, result[1] = processed image (from Space)
-        scores = result[0]
-        if not isinstance(scores, dict) or len(scores) == 0:
-            raise ValueError(f"Unexpected scores format: {scores}")
+        # Debug: see exactly what HF returned
+        print("HF raw result:", repr(hf_result))
 
-        label = max(scores, key=scores.get)
-        confidence = round(float(scores[label]) * 100.0, 2)
+        label = "unknown"
+        confidence = 100.0  # default, if we don't find a score
+        processed_image = img_path  # default to original image
 
-        # We just show the original upload on our UI
+        # Handle different possible return formats from Hugging Face API
+        if isinstance(hf_result, tuple) and len(hf_result) >= 2:
+            # If it's a tuple, first element is usually the label/prediction, 
+            # second might be the processed image
+            if isinstance(hf_result[0], str):
+                label = hf_result[0]
+            elif isinstance(hf_result[0], dict) and "label" in hf_result[0]:
+                label = hf_result[0]["label"]
+                if "score" in hf_result[0] and hf_result[0]["score"] is not None:
+                    confidence = round(float(hf_result[0]["score"]) * 100.0, 2)
+            
+            # Check if second element is an image path
+            if isinstance(hf_result[1], str) and (hf_result[1].endswith('.jpg') or hf_result[1].endswith('.png') or hf_result[1].endswith('.jpeg')):
+                processed_image = hf_result[1]
+        elif isinstance(hf_result, list) and len(hf_result) > 0:
+            first = hf_result[0]
+
+            # list of {"label": ..., "score": ...}
+            if isinstance(first, dict) and "label" in first:
+                # choose the dict with max "score" (or 0 if missing)
+                best = max(
+                    hf_result,
+                    key=lambda x: float(x.get("score", 0) or 0)
+                    if isinstance(x, dict)
+                    else 0,
+                )
+                label = best.get("label", "unknown")
+                if "score" in best and best["score"] is not None:
+                    confidence = round(float(best["score"]) * 100.0, 2)
+            else:
+                # list of plain labels: ["uniform", "non_uniform", ...]
+                label = str(first)
+
+        # Case 2: single dict {"label": ..., "score": ...}
+        elif isinstance(hf_result, dict) and "label" in hf_result:
+            label = hf_result.get("label", "unknown")
+            if "score" in hf_result and hf_result["score"] is not None:
+                confidence = round(float(hf_result["score"]) * 100.0, 2)
+            # Check if dict contains an image path
+            for key in hf_result:
+                if isinstance(hf_result[key], str) and (hf_result[key].endswith('.jpg') or hf_result[key].endswith('.png') or hf_result[key].endswith('.jpeg')):
+                    processed_image = hf_result[key]
+                    break
+
+        # Case 3: just a plain string: "uniform"
+        elif isinstance(hf_result, str):
+            label = hf_result
+
         return {
             "label": label,
             "confidence": confidence,
-            "processed_image": img_path,
+            "processed_image": processed_image,
         }
 
     except Exception as e:
@@ -99,7 +148,8 @@ def process_image_route():
                     }
                 ],
                 # Flask will serve /static/... by default
-                "processed_image": f"/{result['processed_image']}",
+                "processed_image": result['processed_image'] if result['processed_image'].startswith('/') else f"/{result['processed_image']}",
+                "debug_raw": repr(result)  # 👈 add this line
             }
             return jsonify(response), 200
 
@@ -112,7 +162,6 @@ def process_image_route():
 
 # -----------------------
 # Local dev entrypoint
-# (Render will ignore this and use gunicorn)
 # -----------------------
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
