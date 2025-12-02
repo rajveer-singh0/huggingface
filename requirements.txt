@@ -1,7 +1,4 @@
 flask
-tensorflow
-numpy
-opencv-python
-pillow
 gunicorn
 werkzeug
+gradio_client
