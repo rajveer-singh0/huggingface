@@ -304,5 +304,5 @@ document.addEventListener("DOMContentLoaded", function () {
     if (event.target === resultsModal) {
       closeModalHandler();
     }
-  }
+  });
 });
