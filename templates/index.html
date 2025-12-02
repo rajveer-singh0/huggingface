@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uniform Detection - AI-Powered Analysis</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Advanced AI-powered uniform detection system with real-time camera capture and file upload capabilities.">
+</head>
+
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                Uniform Detection
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1>Uniform Detection Model</h1>
+                <p>Upload or capture images to detect and analyze uniforms with our advanced AI-powered computer vision system</p>
+                
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-brain"></i>
+                        <span>AI-Powered</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Real-Time</span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-shield-check"></i>
+                        <span>Accurate</span>
+                    </div>
+                </div>
+
+                <div class="upload-options">
+                    <div class="upload-box" id="uploadBox">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Upload Image</h3>
+                        <p>Drag and drop an image, or click to select</p>
+                        <p class="formats">Supported formats: PNG, JPG, JPEG</p>
+                        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/jpg"
+                            style="display: none;">
+                    </div>
+
+                    <div class="upload-box" id="cameraBox">
+                        <i class="fas fa-camera"></i>
+                        <h3>Capture Image</h3>
+                        <p>Click below to start camera capture</p>
+                        <button id="startCamera">Start Camera</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <h2>About Our Model</h2>
+            <p>Our Uniform Detection Model leverages advanced computer vision and deep learning techniques to accurately
+                identify individuals wearing specific uniforms in real-time or from uploaded images. Designed for
+                applications in security, education, and workplace environments, this model ensures high precision and
+                reliability across diverse lighting and background conditions.</p>
+
+            <div class="process-flow">
+                <div class="process-step">
+                    <div class="step-icon"><i class="fas fa-image"></i></div>
+                    <h3>Image Input</h3>
+                    <p>Camera/Upload</p>
+                </div>
+                <div class="arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="process-step">
+                    <div class="step-icon"><i class="fas fa-brain"></i></div>
+                    <h3>AI Processing</h3>
+                    <p>Deep Learning</p>
+                </div>
+                <div class="arrow"><i class="fas fa-arrow-right"></i></div>
+                <div class="process-step">
+                    <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>Results</h3>
+                    <p>Detection Output</p>
+                </div>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fas fa-video"></i>
+                    <h3>Real-Time Detection</h3>
+                    <p>Capture and analyze live footage using your device camera.</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-file-image"></i>
+                    <h3>File-Based Analysis</h3>
+                    <p>Upload images for fast, offline uniform detection.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="contact-section">
+            <h2>Contact Us</h2>
+            <p>Have questions about our uniform detection model?</p>
+
+            <div class="contact-info">
+                <p><i class="fas fa-envelope"></i> rajveersingh0011rjv@gmail.com</p>
+                <p><i class="fas fa-phone"></i> +91 95081XXXXX</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Uniform Detection</h3>
+                <p>Advanced AI-powered uniform detection for enhanced security and compliance</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <table>
+                    <tr>
+                        <td>Features</td>
+                        <td>Contact</td>
+                    </tr>
+                    <tr>
+                        <td>About</td>
+                        <td><a href="mailto:rajveersingh0011rjv@gmail.com">rajveersingh0011rjv@gmail.com</a></td>
+                    </tr>
+                    <tr>
+                        <td>Contact</td>
+                        <td>📞 +91 95081XXXXX</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2025 Uniform Detection. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Camera Capture</h2>
+            <div class="camera-container">
+                <video id="cameraFeed" autoplay playsinline></video>
+                <canvas id="cameraCanvas" style="display: none;"></canvas>
+            </div>
+            <button id="captureBtn">Capture Image</button>
+            <button id="retakeBtn" style="display: none;">Retake</button>
+            <button id="useImageBtn" style="display: none;">Use This Image</button>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-search"></i>
+                    Detection Results
+                </h2>
+                <p>AI-powered uniform detection analysis</p>
+            </div>
+            <div id="resultsContainer">
+                <div class="image-container">
+                    <img id="resultImage" src="" alt="Processed Image">
+                    <div class="image-overlay">
+                        <div id="detectionBadge" class="detection-badge" style="display: none;">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="badgeText"></span>
+                        </div>
+                    </div>
+                </div>
+                <div id="detectionResults">
+                    <h3>
+                        <i class="fas fa-chart-bar"></i>
+                        Analysis Results
+                    </h3>
+                    <div id="resultsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+
+</html>
