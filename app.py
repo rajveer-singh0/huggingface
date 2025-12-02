@@ -1,17 +1,7 @@
-
 import os
 from flask import Flask, render_template, request, jsonify
 from werkzeug.utils import secure_filename
-import tensorflow as tf
-from tensorflow.keras.preprocessing import image
-import numpy as np
-import cv2
-
-# -----------------------
-# Environment configuration
-# -----------------------
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow logs
-os.environ['CUDA_VISIBLE_DEVICES'] = '-1'  # Force CPU (no CUDA)
+from gradio_client import Client, handle_file
 
 # -----------------------
 # Flask App Initialization
@@ -26,19 +16,11 @@ app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg'}
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB limit
 
 # -----------------------
-# Load the trained model safely
+# Gradio Client (Hugging Face Space)
 # -----------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'model', 'uniform_model.keras')
-
-try:
-    model = tf.keras.models.load_model(MODEL_PATH)
-except Exception as e:
-    raise FileNotFoundError(
-        f"Model not found or incompatible. Make sure {MODEL_PATH} exists. Original error: {e}"
-    )
-
-CLASS_NAMES = ['non_uniform', 'uniform']  # 0 = non_uniform, 1 = uniform
+# Use your actual Space ID here:
+client = Client("rajveer0singh/uniform_detection")
+API_NAME = "/predict_gradio"  # same as you used in your test script
 
 # -----------------------
 # Helper Functions
@@ -47,34 +29,35 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+
 def predict_image(img_path):
+    """
+    Calls your Hugging Face Gradio Space with the uploaded image.
+    Expects the Space to return [scores_dict, processed_image].
+    """
     try:
-        # Preprocess the image
-        img = image.load_img(img_path, target_size=(128, 128))
-        img_array = image.img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+        # Call your Gradio Space
+        result = client.predict(
+            img=handle_file(img_path),
+            api_name=API_NAME
+        )
 
-        # Prediction
-        prediction = model.predict(img_array)[0][0]
-        label_idx = 1 if prediction > 0.5 else 0
-        label = CLASS_NAMES[label_idx]
-        confidence = prediction if label_idx == 1 else 1 - prediction
+        # For your Space, result should be:
+        # result[0] = dict like {"uniform": 0.93, "non_uniform": 0.07}
+        # result[1] = processed image file path (downloaded by gradio_client)
+        scores = result[0]
+        processed_image_remote = result[1]
 
-        # Visualization
-        img = cv2.imread(img_path)
-        if img is not None:
-            text = f"{label} ({confidence:.2%})"
-            cv2.putText(img, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7, (0, 255, 0), 2)
-            processed_path = os.path.join(
-                app.config['UPLOAD_FOLDER'],
-                'processed_' + os.path.basename(img_path)
-            )
-            cv2.imwrite(processed_path, img)
-        else:
-            processed_path = img_path
+        # Pick best label
+        label = max(scores, key=scores.get)
+        confidence = round(float(scores[label]) * 100, 2)
 
-        return {"label": label, "confidence": round(confidence * 100, 2), "processed_image": processed_path}
+        # If you want, you can ignore processed_image_remote
+        # and just show the original upload on your UI.
+        # Or you can copy that file into static/uploads.
+        processed_path = img_path  # simplest: use original image
+
+        return {"label": label, "confidence": confidence, "processed_image": processed_path}
 
     except Exception as e:
         print(f"Prediction error: {e}")
@@ -86,6 +69,7 @@ def predict_image(img_path):
 @app.route('/')
 def home():
     return render_template('index.html')
+
 
 @app.route('/process_image', methods=['POST'])
 def process_image_route():
@@ -109,16 +93,18 @@ def process_image_route():
             "success": True,
             "detections": [{
                 "class": result['label'],
-                "confidence": result['confidence'] / 100
+                "confidence": result['confidence'] / 100.0
             }],
+            # serve the original uploaded file from /static/uploads/...
             "processed_image": f"/{result['processed_image']}"
         }
         return jsonify(response)
 
     return jsonify({"success": False, "error": "Invalid file type"})
 
+
 # -----------------------
-# Run App
+# Run App (local dev only)
 # -----------------------
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
